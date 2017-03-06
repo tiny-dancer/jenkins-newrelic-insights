@@ -61,12 +61,12 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         String insertKey = "";
         try {
             if (insights.sendCustomEvent(insertKey, accountId, data)) {
-                listener.getLogger().println("New Relic Insights Success: Inserted custom event.");
+                listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
-                listener.getLogger().println("New Relic Insights Failure: Did not insert custom event.");
+                listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
             }
         } catch(IOException ex) {
-            listener.getLogger().println("New Relic Insights Failure: Exception thrown.");
+            listener.getLogger().println("New Relic Insights: Failure, exception thrown.");
             listener.error(ex.getMessage(), ex);
         }
     }
