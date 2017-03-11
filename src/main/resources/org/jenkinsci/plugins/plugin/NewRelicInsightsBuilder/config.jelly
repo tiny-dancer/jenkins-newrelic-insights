@@ -1,5 +1,6 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
   <!--
     This jelly script is used for per-project configuration.
 
@@ -10,6 +11,9 @@
     Creates a text field that shows the value of the "name" property.
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
+  <f:entry title="Insights Insert Key" field="credentialsId">
+    <c:select/>
+  </f:entry>
   <f:entry title="Json" field="json">
     <f:textbox />
   </f:entry>

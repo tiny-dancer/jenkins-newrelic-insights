@@ -11,4 +11,6 @@ public interface InsightsCredentials extends Credentials {
 
     Secret getApiKey();
 
+    String getAccountId();
+
 }

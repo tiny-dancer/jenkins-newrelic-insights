@@ -1,24 +1,37 @@
 package org.jenkinsci.plugins.plugin;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.model.*;
+import hudson.model.queue.Tasks;
+import hudson.security.ACL;
 import hudson.util.FormValidation;
-import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights;
 import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsightsApacheClient;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sample {@link Builder}.
@@ -38,29 +51,32 @@ import java.io.IOException;
  */
 public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep {
 
-
+    private final String credentialsId;
     private final String json;
 
     // Fields in credentials.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public NewRelicInsightsBuilder(String json) {
+    public NewRelicInsightsBuilder(String credentialsId, String json) {
+        this.credentialsId = credentialsId;
         this.json = json;
     }
 
+    public String getCredentialsId() {
+        return this.credentialsId;
+    }
+
     public String getJson() {
-        return json;
+        return this.json;
     }
 
     @Override
     public void perform(Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
-        // This is where you 'build' the project.
-        // Since this is a dummy, we just say 'hello world' and call that a build.
 
         NewRelicInsights insights = getClient();
-        String accountId = "";
-        String insertKey = "";
+        InsightsCredentials creds = getInsightsCredentials(this.credentialsId, build);
+
         try {
-            if (insights.sendCustomEvent(insertKey, accountId, json)) {
+            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json)) {
                 listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
                 listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
@@ -69,6 +85,13 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
             listener.getLogger().println("New Relic Insights: Failure, exception thrown.");
             listener.error(ex.getMessage(), ex);
         }
+
+
+    }
+
+    private InsightsCredentials getInsightsCredentials(String credentialsId, Run<?,?> run) {
+        List<InsightsCredentials> insightsCredentialsList = CredentialsProvider.lookupCredentials(InsightsCredentials.class, run.getParent(), ACL.SYSTEM, new ArrayList<DomainRequirement>());
+        return CredentialsMatchers.firstOrNull(insightsCredentialsList, CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
     }
 
     // Overridden for better type safety.
@@ -107,27 +130,6 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
             load();
         }
 
-        /**
-         * Performs on-the-fly validation of the form field 'name'.
-         *
-         * @param value
-         *      This parameter receives the value that the user has typed.
-         * @return
-         *      Indicates the outcome of the validation. This is sent to the browser.
-         *      <p>
-         *      Note that returning {@link FormValidation#error(String)} does not
-         *      prevent the form from being saved. It just means that a message
-         *      will be displayed to the user. 
-         */
-//        public FormValidation doCheckName(@QueryParameter String value)
-//                throws IOException, ServletException {
-//            if (value.length() == 0)
-//                return FormValidation.error("Please set a name");
-//            if (value.length() < 4)
-//                return FormValidation.warning("Isn't the name too short?");
-//            return FormValidation.ok();
-//        }
-
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types 
             return true;
@@ -159,6 +161,24 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
          */
         public boolean getUseFrench() {
             return useFrench;
+        }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Job context, @QueryParameter String source, @QueryParameter String value) {
+            if (context == null || !context.hasPermission(Item.CONFIGURE)) {
+                // previously it was recommended to just return an empty ListBoxModel
+                // now recommended to return a model with just the current value
+                return new StandardUsernameListBoxModel().includeCurrentValue(value);
+            }
+            // previously it was recommended to use the withXXX methods providing the credentials instances directly
+            // now recommended to populate the model using the includeXXX methods which call through to
+            // CredentialsProvider.listCredentials and to ensure that the current value is always present using
+            // includeCurrentValue
+            return new StandardUsernameListBoxModel()
+                    .includeEmptyValue()
+                    .includeAs(Tasks.getAuthenticationOf(context), context, InsightsCredentials.class,
+                            URIRequirementBuilder.fromUri(source).build())
+                    .includeCurrentValue(value);
         }
     }
 
