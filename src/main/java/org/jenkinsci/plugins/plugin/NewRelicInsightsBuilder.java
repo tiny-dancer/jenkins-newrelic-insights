@@ -28,27 +28,27 @@ import java.io.IOException;
  * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked
  * and a new {@link NewRelicInsightsBuilder} is created. The created
  * instance is persisted to the project configuration XML by using
- * XStream, so this allows you to use instance fields (like {@link #name})
+ * XStream, so this allows you to use instance fields (like {@link #json})
  * to remember the configuration.
  *
  * <p>
  * When a build is performed, the {@link #perform} method will be invoked. 
  *
- * @author Kohsuke Kawaguchi
+ * @author Matthew Grose
  */
 public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep {
 
 
-    private final String data;
+    private final String json;
 
-    // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
+    // Fields in credentials.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public NewRelicInsightsBuilder(String name, String data) {
-        this.data = data;
+    public NewRelicInsightsBuilder(String json) {
+        this.json = json;
     }
 
-    public String getData() {
-        return data;
+    public String getJson() {
+        return json;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         String accountId = "";
         String insertKey = "";
         try {
-            if (insights.sendCustomEvent(insertKey, accountId, data)) {
+            if (insights.sendCustomEvent(insertKey, accountId, json)) {
                 listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
                 listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
@@ -119,14 +119,14 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
          *      prevent the form from being saved. It just means that a message
          *      will be displayed to the user. 
          */
-        public FormValidation doCheckName(@QueryParameter String value)
-                throws IOException, ServletException {
-            if (value.length() == 0)
-                return FormValidation.error("Please set a name");
-            if (value.length() < 4)
-                return FormValidation.warning("Isn't the name too short?");
-            return FormValidation.ok();
-        }
+//        public FormValidation doCheckName(@QueryParameter String value)
+//                throws IOException, ServletException {
+//            if (value.length() == 0)
+//                return FormValidation.error("Please set a name");
+//            if (value.length() < 4)
+//                return FormValidation.warning("Isn't the name too short?");
+//            return FormValidation.ok();
+//        }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types 
