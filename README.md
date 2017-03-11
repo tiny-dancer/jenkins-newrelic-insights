@@ -30,3 +30,8 @@ This project is distributed under the MIT license.
 - [ ] Support variables in freestyle
 - [ ] Support pipeline
 - [ ] Surface a cleaner way to pass the data via pipeline
+
+## Reference credit
+
+https://github.com/jenkinsci/newrelic-deployment-notifier-plugin
+ 
