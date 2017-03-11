@@ -3,23 +3,18 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.*;
-import hudson.model.queue.Tasks;
 import hudson.security.ACL;
-import hudson.util.FormValidation;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.acegisecurity.Authentication;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights;
 import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsightsApacheClient;
@@ -28,7 +23,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +47,14 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
 
     private final String credentialsId;
     private final String json;
+    private final List<KeyValue> data;
 
     // Fields in credentials.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public NewRelicInsightsBuilder(String credentialsId, String json) {
+    public NewRelicInsightsBuilder(String credentialsId, String json, List<KeyValue> data) {
         this.credentialsId = credentialsId;
         this.json = json;
+        this.data = data;
     }
 
     public String getCredentialsId() {
@@ -69,6 +65,10 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         return this.json;
     }
 
+    public List<KeyValue> getData() {
+        return data;
+    }
+
     @Override
     public void perform(Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
 
@@ -76,7 +76,7 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         InsightsCredentials creds = getInsightsCredentials(this.credentialsId, build);
 
         try {
-            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json)) {
+            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json, data)) {
                 listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
                 listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
@@ -85,8 +85,34 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
             listener.getLogger().println("New Relic Insights: Failure, exception thrown.");
             listener.error(ex.getMessage(), ex);
         }
+    }
 
 
+    /**
+     * Retrieve the build environment from the upstream build
+     */
+    public EnvVars getEnvironment(Run<?,?> build, TaskListener listener)
+            {
+
+        CapturedEnvironmentAction capture = build.getAction(CapturedEnvironmentAction.class);
+        if (capture != null) {
+            return capture.getCapturedEnvironment();
+        } else {
+            return build.getEnvironment(listener);
+        }
+    }
+
+    public class CapturedEnvironmentAction extends InvisibleAction {
+
+        private final EnvVars env;
+
+        public CapturedEnvironmentAction(EnvVars env) {
+            this.env = env;
+        }
+
+        public EnvVars getCapturedEnvironment() {
+            return env;
+        }
     }
 
     private InsightsCredentials getInsightsCredentials(String credentialsId, Run<?,?> run) {

@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.plugin.newrelic;
 
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -14,9 +16,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.jenkinsci.plugins.plugin.KeyValue;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -42,11 +47,18 @@ public class NewRelicInsightsApacheClient implements NewRelicInsights {
      * {@inheritDoc}
      */
     @Override
-    public boolean sendCustomEvent(String insertKey, String accountId, String data) throws IOException {
+    public boolean sendCustomEvent(String insertKey, String accountId, String data, List<KeyValue> keyValues) throws IOException {
         URI url = getInsightsAccountUrl(accountId);
         HttpPost request = new HttpPost(url);
+
+        Map<String, String> objectMap = new HashedMap();
+        for (KeyValue keyValue : keyValues) {
+            objectMap.put(keyValue.getKey(), keyValue.getValue());
+        }
+        JSONObject json = new JSONObject();
+        json.putAll( objectMap );
         setHeaders(request, insertKey);
-        StringEntity entity = new StringEntity(data);
+        StringEntity entity = new StringEntity(json.toString());
         request.setEntity(entity);
         request.setHeader("Accept", "application/json");
         request.setHeader("Content-type", "application/json");
