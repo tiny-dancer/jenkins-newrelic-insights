@@ -4,7 +4,7 @@ This is a Jenkins Plugin which allows users to send custom events to new relic i
 
 ## Usage
 
-Set up a new relic insights credential in jenkins
+Set up a "New Relic Insights Key" credential
 
 ![alt text](./docs/jenkins-creds.png "Logo Title Text 1")
 
