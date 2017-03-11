@@ -87,34 +87,6 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         }
     }
 
-
-    /**
-     * Retrieve the build environment from the upstream build
-     */
-    public EnvVars getEnvironment(Run<?,?> build, TaskListener listener)
-            {
-
-        CapturedEnvironmentAction capture = build.getAction(CapturedEnvironmentAction.class);
-        if (capture != null) {
-            return capture.getCapturedEnvironment();
-        } else {
-            return build.getEnvironment(listener);
-        }
-    }
-
-    public class CapturedEnvironmentAction extends InvisibleAction {
-
-        private final EnvVars env;
-
-        public CapturedEnvironmentAction(EnvVars env) {
-            this.env = env;
-        }
-
-        public EnvVars getCapturedEnvironment() {
-            return env;
-        }
-    }
-
     private InsightsCredentials getInsightsCredentials(String credentialsId, Run<?,?> run) {
         List<InsightsCredentials> insightsCredentialsList = CredentialsProvider.lookupCredentials(InsightsCredentials.class, run.getParent(), ACL.SYSTEM, new ArrayList<DomainRequirement>());
         return CredentialsMatchers.firstOrNull(insightsCredentialsList, CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
