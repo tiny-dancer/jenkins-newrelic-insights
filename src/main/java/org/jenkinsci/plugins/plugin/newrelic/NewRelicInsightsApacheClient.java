@@ -1,8 +1,5 @@
 package org.jenkinsci.plugins.plugin.newrelic;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 import org.apache.http.*;
@@ -18,10 +15,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 
-import javax.lang.model.type.PrimitiveType;
 import java.io.IOException;
 import java.net.*;
-import java.util.Map;
 
 
 /**
@@ -49,10 +44,9 @@ public class NewRelicInsightsApacheClient implements NewRelicInsights {
     @Override
     public boolean sendCustomEvent(String insertKey, String accountId, String data) throws IOException {
         URI url = getInsightsAccountUrl(accountId);
-        JsonValue value = Json.value(data);
         HttpPost request = new HttpPost(url);
         setHeaders(request, insertKey);
-        StringEntity entity = new StringEntity(value.toString());
+        StringEntity entity = new StringEntity(data);
         request.setEntity(entity);
         request.setHeader("Accept", "application/json");
         request.setHeader("Content-type", "application/json");

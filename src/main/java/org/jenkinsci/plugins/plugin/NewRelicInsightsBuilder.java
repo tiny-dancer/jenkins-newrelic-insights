@@ -164,21 +164,23 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         }
 
         @SuppressWarnings("unused") // used by stapler
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Job context, @QueryParameter String source, @QueryParameter String value) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Job context,
+                                                     @QueryParameter String remoteBase, @QueryParameter String value) {
             if (context == null || !context.hasPermission(Item.CONFIGURE)) {
-                // previously it was recommended to just return an empty ListBoxModel
-                // now recommended to return a model with just the current value
-                return new StandardUsernameListBoxModel().includeCurrentValue(value);
+                return new StandardListBoxModel();
             }
-            // previously it was recommended to use the withXXX methods providing the credentials instances directly
-            // now recommended to populate the model using the includeXXX methods which call through to
-            // CredentialsProvider.listCredentials and to ensure that the current value is always present using
-            // includeCurrentValue
-            return new StandardUsernameListBoxModel()
-                    .includeEmptyValue()
-                    .includeAs(Tasks.getAuthenticationOf(context), context, InsightsCredentials.class,
-                            URIRequirementBuilder.fromUri(source).build())
-                    .includeCurrentValue(value);
+
+            List<DomainRequirement> domainRequirements = new ArrayList<>();
+            return new StandardListBoxModel()
+                    .withEmptySelection()
+                    .withMatching(
+                            CredentialsMatchers.anyOf(
+                                    CredentialsMatchers.instanceOf(InsightsCredentials.class)),
+                            CredentialsProvider.lookupCredentials(
+                                    StandardCredentials.class,
+                                    context,
+                                    ACL.SYSTEM,
+                                    domainRequirements));
         }
     }
 
