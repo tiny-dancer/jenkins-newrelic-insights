@@ -41,6 +41,7 @@ node {
 ```
 
 #### Groovy Map
+
 ```groovy
 import groovy.json.*;
 
@@ -56,6 +57,7 @@ node {
 ```
 > Insights only accepts key-value pairs, not map/object or array values. Only floats and strings are
  supported data types.  See [Insights Docs](https://docs.newrelic.com/docs/insights/explore-keyValues/custom-events/insert-custom-events-insights-api) for more information.
+
 
 ### Querying in Insights
 
