@@ -1,4 +1,4 @@
-# jenkins-newrelic-insights
+# Jenkins New Relic Insights Plugin
 
 This is a Jenkins Plugin which allows users to send custom events to new relic insights.
 
