@@ -4,7 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import hudson.EnvVars;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
@@ -16,12 +16,8 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights;
 import org.jenkinsci.plugins.plugin.newrelic.NewRelicInsightsApacheClient;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,7 +29,7 @@ import java.util.List;
  * <p>
  * When the user configures the project and enables this builder,
  * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked
- * and a new {@link NewRelicInsightsBuilder} is created. The created
+ * and a new {@link NewRelicInsights} is created. The created
  * instance is persisted to the project configuration XML by using
  * XStream, so this allows you to use instance fields (like {@link #json})
  * to remember the configuration.
@@ -43,40 +39,49 @@ import java.util.List;
  *
  * @author Matthew Grose
  */
-public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep {
+public class NewRelicInsights extends Builder implements SimpleBuildStep {
 
     private final String credentialsId;
-    private final String json;
-    private final List<KeyValue> data;
+    private Object json;
+    private List<KeyValue> keyValues;
 
     // Fields in credentials.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public NewRelicInsightsBuilder(String credentialsId, String json, List<KeyValue> data) {
+    public NewRelicInsights(@CheckForNull String credentialsId) {
         this.credentialsId = credentialsId;
-        this.json = json;
-        this.data = data;
     }
 
+    @CheckForNull
     public String getCredentialsId() {
         return this.credentialsId;
     }
 
-    public String getJson() {
+    @DataBoundSetter
+    public void setKeyValues(List<KeyValue> keyValues) {
+        this.keyValues = keyValues;
+    }
+
+    @DataBoundSetter
+    public void setJson(Object json) {
+        this.json = json;
+    }
+
+    public Object getJson() {
         return this.json;
     }
 
-    public List<KeyValue> getData() {
-        return data;
+    public List<KeyValue> getKeyValues() {
+        return keyValues;
     }
+
 
     @Override
     public void perform(Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
 
-        NewRelicInsights insights = getClient();
+        org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights insights = getClient();
         InsightsCredentials creds = getInsightsCredentials(this.credentialsId, build);
-
         try {
-            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json, data)) {
+            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json, keyValues)) {
                 listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
                 listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
@@ -101,15 +106,14 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
     }
 
     /**
-     * Descriptor for {@link NewRelicInsightsBuilder}. Used as a singleton.
+     * Descriptor for {@link NewRelicInsights}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      *
      * <p>
-     * See {@code src/main/resources/hudson/plugins/hello_world/NewRelicInsightsBuilder/*.jelly}
+     * See {@code src/main/resources/hudson/plugins/hello_world/NewRelicInsights/*.jelly}
      * for the actual HTML fragment for the configuration screen.
      */
-    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    @Symbol("newrelicInsights")
+    @Extension @Symbol("newrelicInsights")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         /**
          * To persist global configuration information,
@@ -182,7 +186,7 @@ public class NewRelicInsightsBuilder extends Builder implements SimpleBuildStep 
         }
     }
 
-    public NewRelicInsights getClient() {
+    public org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights getClient() {
         return new NewRelicInsightsApacheClient();
     }
 }
