@@ -15,6 +15,6 @@
     <c:select/>
   </f:entry>
   <f:entry>
-    <f:repeatableProperty field="data" minimum="0" add="Add a key/value pair"></f:repeatableProperty>
+    <f:repeatableProperty field="keyValues" minimum="0" add="Add a key/value pair"></f:repeatableProperty>
   </f:entry>
 </j:jelly>
