@@ -43,7 +43,7 @@ public class NewRelicInsights extends Builder implements SimpleBuildStep {
 
     private final String credentialsId;
     private Object json;
-    private List<KeyValue> data;
+    private List<KeyValue> keyValues;
 
     // Fields in credentials.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -57,8 +57,8 @@ public class NewRelicInsights extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setData(List<KeyValue> data) {
-        this.data = data;
+    public void setKeyValues(List<KeyValue> keyValues) {
+        this.keyValues = keyValues;
     }
 
     @DataBoundSetter
@@ -70,8 +70,8 @@ public class NewRelicInsights extends Builder implements SimpleBuildStep {
         return this.json;
     }
 
-    public List<KeyValue> getData() {
-        return data;
+    public List<KeyValue> getKeyValues() {
+        return keyValues;
     }
 
 
@@ -81,7 +81,7 @@ public class NewRelicInsights extends Builder implements SimpleBuildStep {
         org.jenkinsci.plugins.plugin.newrelic.NewRelicInsights insights = getClient();
         InsightsCredentials creds = getInsightsCredentials(this.credentialsId, build);
         try {
-            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json, data)) {
+            if (insights.sendCustomEvent(creds.getApiKey().getPlainText(), creds.getAccountId(), json, keyValues)) {
                 listener.getLogger().println("New Relic Insights: Success, inserted custom event.");
             } else {
                 listener.getLogger().println("New Relic Insights: Failure, did not insert custom event.");
