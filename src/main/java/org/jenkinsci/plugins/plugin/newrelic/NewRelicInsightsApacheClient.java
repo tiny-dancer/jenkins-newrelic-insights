@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.plugin.newrelic;
 
+import com.google.gson.Gson;
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -47,21 +48,29 @@ public class NewRelicInsightsApacheClient implements NewRelicInsights {
      * {@inheritDoc}
      */
     @Override
-    public boolean sendCustomEvent(String insertKey, String accountId, String data, List<KeyValue> keyValues) throws IOException {
+    public boolean sendCustomEvent(String insertKey, String accountId, Object data, List<KeyValue> keyValues) throws IOException {
         URI url = getInsightsAccountUrl(accountId);
         HttpPost request = new HttpPost(url);
+        String json;
 
-        Map<String, String> objectMap = new HashedMap();
-        for (KeyValue keyValue : keyValues) {
-            objectMap.put(keyValue.getKey(), keyValue.getValue());
+        if (keyValues != null && !keyValues.isEmpty()) {
+            Map<String, String> objectMap = new HashedMap();
+
+            for (KeyValue keyValue : keyValues) {
+                objectMap.put(keyValue.getKey(), keyValue.getValue());
+            }
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putAll( objectMap );
+            json = jsonObject.toString();
+        } else {
+            json = new Gson().toJson(data);
         }
-        JSONObject json = new JSONObject();
-        json.putAll( objectMap );
+
         setHeaders(request, insertKey);
-        StringEntity entity = new StringEntity(json.toString());
+        StringEntity entity = new StringEntity(json);
         request.setEntity(entity);
-        request.setHeader("Accept", "application/json");
-        request.setHeader("Content-type", "application/json");
+        request.setHeader("Accept", "application/jsonObject");
+        request.setHeader("Content-type", "application/jsonObject");
 
         CloseableHttpClient client = getHttpClient(url);
         boolean result;
