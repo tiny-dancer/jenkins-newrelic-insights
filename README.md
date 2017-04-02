@@ -55,7 +55,7 @@ node {
 }
 ```
 > Insights only accepts key-value pairs, not map/object or array values. Only floats and strings are
- supported data types.  See [New Relic Insights Docs](https://docs.newrelic.com/docs/insights/explore-data/custom-events/insert-custom-events-insights-api) for more information.
+ supported data types.  See [Insights Docs](https://docs.newrelic.com/docs/insights/explore-data/custom-events/insert-custom-events-insights-api) for more information.
 
 ### Querying in Insights
 

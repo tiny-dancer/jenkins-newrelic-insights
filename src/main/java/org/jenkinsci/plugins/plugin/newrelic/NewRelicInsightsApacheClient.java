@@ -69,8 +69,8 @@ public class NewRelicInsightsApacheClient implements NewRelicInsights {
         setHeaders(request, insertKey);
         StringEntity entity = new StringEntity(json);
         request.setEntity(entity);
-        request.setHeader("Accept", "application/jsonObject");
-        request.setHeader("Content-type", "application/jsonObject");
+        request.setHeader("Accept", "application/json");
+        request.setHeader("Content-type", "application/json");
 
         CloseableHttpClient client = getHttpClient(url);
         boolean result;
