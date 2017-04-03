@@ -43,13 +43,11 @@ node {
 #### Groovy Map
 
 ```groovy
-import groovy.json.*;
-
 node {
     // a simpler option for pipelines
     def json = [eventType: 'test_deployment', appId: '888']
     
-    // call build step with json string
+    // call build step with map
     step([$class: 'NewRelicInsights', 
     credentialsId: '291ff5f2-a93f-4d5a-8e56-a43d61475fc7', 
     json: json])   
